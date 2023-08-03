@@ -1,0 +1,190 @@
+{
+  "name": "high_number_of_pending_tasks_in_elasticsearch",
+  "description": "This incident type refers to an alert triggered by a monitoring system indicating that the number of pending tasks in ElasticSearch is high. This can be an issue because it may indicate that the system is overloaded and unable to process all the incoming tasks, which can result in performance degradation or even downtime. The incident needs to be investigated and resolved as soon as possible to ensure the system is functioning properly.",
+  "params": [
+    {
+      "name": "ELASTICSEARCH_LOG_FILE",
+      "value": ""
+    },
+    {
+      "name": "ELASTICSEARCH_CONFIG_FILE",
+      "value": ""
+    },
+    {
+      "name": "DESIRED_NODE_COUNT",
+      "value": ""
+    },
+    {
+      "name": "DESIRED_CONCURRENT_REBALANCE",
+      "value": ""
+    },
+    {
+      "name": "DESIRED_SHARDS_PER_NODE",
+      "value": ""
+    },
+    {
+      "name": "DESIRED_CONCURRENT_RECOVERIES",
+      "value": ""
+    },
+    {
+      "name": "ELASTICSEARCH_NODE",
+      "value": ""
+    },
+    {
+      "name": "CLUSTER_NAME",
+      "value": ""
+    },
+    {
+      "name": "HOST_NAME",
+      "value": ""
+    },
+    {
+      "name": "K8S_CLUSTER_NAME",
+      "value": ""
+    },
+    {
+      "name": "NAMESPACE",
+      "value": ""
+    }
+  ],
+  "cells": [
+    {
+      "name": "cell_1",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## High number of pending tasks in ElasticSearch.\nThis incident type refers to an alert triggered by a monitoring system indicating that the number of pending tasks in ElasticSearch is high. This can be an issue because it may indicate that the system is overloaded and unable to process all the incoming tasks, which can result in performance degradation or even downtime. The incident needs to be investigated and resolved as soon as possible to ensure the system is functioning properly."
+    },
+    {
+      "name": "cell_2",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check if ElasticSearch service is running"
+    },
+    {
+      "name": "cell_3",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `systemctl status elasticsearch.service`"
+    },
+    {
+      "name": "cell_4",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check ElasticSearch logs for any errors or warnings"
+    },
+    {
+      "name": "cell_5",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `journalctl -u elasticsearch.service`"
+    },
+    {
+      "name": "cell_6",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the status of the ElasticSearch cluster"
+    },
+    {
+      "name": "cell_7",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `curl -XGET '${ELASTICSEARCH_NODE}:9200/_cat/health?v'`"
+    },
+    {
+      "name": "cell_8",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the status of ElasticSearch nodes in the cluster"
+    },
+    {
+      "name": "cell_9",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `curl -XGET '${ELASTICSEARCH_NODE}:9200/_cat/nodes?v'`"
+    },
+    {
+      "name": "cell_10",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the number of pending tasks in the ElasticSearch cluster"
+    },
+    {
+      "name": "cell_11",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `curl -XGET '${ELASTICSEARCH_NODE}:9200/_cluster/pending_tasks'`"
+    },
+    {
+      "name": "cell_12",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Check the metrics for ElasticSearch"
+    },
+    {
+      "name": "cell_13",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `curl -XGET '${ELASTICSEARCH_NODE}:9200/_cat/indices?v'`"
+    },
+    {
+      "name": "cell_14",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## The ElasticSearch cluster may be lacking sufficient resources, such as memory or processing power, to handle the volume of tasks it is receiving."
+    },
+    {
+      "name": "cell_15",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "host | host_name=$HOST_NAME | invoke_elasticsearch_config_check($ELASTICSEARCH_LOG_FILE, $ELASTICSEARCH_CONFIG_FILE)"
+    },
+    {
+      "name": "cell_16",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Define variables"
+    },
+    {
+      "name": "cell_17",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "(host | host_name=$HOST_NAME) union (pod | k8s_cluster_name=$K8S_CLUSTER_NAME | namespace=$NAMESPACE) | `ES_NODE_COUNT=${DESIRED_NODE_COUNT}`"
+    },
+    {
+      "name": "cell_18",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Scale the ElasticSearch cluster"
+    },
+    {
+      "name": "cell_19",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "host | host_name=$HOST_NAME | invoke_change_cluster_shards_per_node($DESIRED_SHARDS_PER_NODE)"
+    },
+    {
+      "name": "cell_20",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Update the elasticsearch cluster settings to change the concurrent rebalance limit."
+    },
+    {
+      "name": "cell_21",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "host | host_name=$HOST_NAME | invoke_rebalance_settings($DESIRED_CONCURRENT_REBALANCE)"
+    },
+    {
+      "name": "cell_22",
+      "type": "MARKDOWN",
+      "enabled": true,
+      "content": "## Update elasticsearch cluster settings to set desired number of concurrent recoveries."
+    },
+    {
+      "name": "cell_23",
+      "type": "OP_LANG",
+      "enabled": true,
+      "content": "host | host_name=$HOST_NAME | invoke_set_cluster_concurrent_recoveries($DESIRED_CONCURRENT_RECOVERIES)"
+    }
+  ]
+}
